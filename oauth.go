@@ -45,12 +45,48 @@ func (r *oauthProxy) getOAuthClient(redirectionURL string, clientAuthMethod stri
 }
 
 // verifyToken verify that the token in the user context is valid
-func verifyToken(client *oidc.Client, token jose.JWT) error {
-	if err := client.VerifyJWT(token); err != nil {
-		if strings.Contains(err.Error(), "token is expired") {
+func (r *oauthProxy) verifyToken(token jose.JWT) error {
+	if r.config.EnableTokenVerificationByTokenIntrospection {
+		res, err := r.introClient.Introspect(token.Encode())
+		if err != nil {
+			return err
+		}
+		if !res.Active {
 			return ErrAccessTokenExpired
 		}
-		return err
+		if !contains(res.Audience, r.config.ClientID) {
+			return ErrInvalidToken
+		}
+		// OAuth Mutual TLS
+		// https://tools.ietf.org/html/draft-ietf-oauth-mtls-14#section-3.2
+		if thumbprint, ok := res.Confirmation["x5t#S256"].(string); ok {
+			// TODO check thumbprint
+			if thumbprint == "TODO" {
+				return ErrInvalidToken
+			}
+		}
+
+	} else {
+		if err := r.client.VerifyJWT(token); err != nil {
+			if strings.Contains(err.Error(), "token is expired") {
+				return ErrAccessTokenExpired
+			}
+			return err
+		}
+		claims, err := token.Claims()
+		if err != nil {
+			return err
+		}
+		if val, ok := claims["cnf"]; ok {
+			if cnf, ok := val.(map[string]interface{}); ok {
+				if thumbprint, ok := cnf["x5t#S256"].(string); ok {
+					// TODO check thumbprint
+					if thumbprint == "TODO" {
+						return ErrInvalidToken
+					}
+				}
+			}
+		}
 	}
 
 	return nil
@@ -164,4 +200,13 @@ func parseToken(t string) (jose.JWT, *oidc.Identity, error) {
 	}
 
 	return token, identity, nil
+}
+
+func contains(s []string, e string) bool {
+	for _, v := range s {
+		if e == v {
+			return true
+		}
+	}
+	return false
 }

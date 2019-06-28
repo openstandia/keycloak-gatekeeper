@@ -127,6 +127,8 @@ var (
 	ErrInvalidSession = errors.New("invalid session identifier")
 	// ErrAccessTokenExpired indicates the access token has expired
 	ErrAccessTokenExpired = errors.New("the access token has expired")
+	// ErrInvalidToken indicates the access token is invalid
+	ErrInvalidToken = errors.New("invalid token")
 	// ErrRefreshTokenExpired indicates the refresh token as expired
 	ErrRefreshTokenExpired = errors.New("the refresh token has expired")
 	// ErrNoTokenAudience indicates their is not audience in the token
@@ -169,6 +171,8 @@ type Config struct {
 	RedirectionURL string `json:"redirection-url" yaml:"redirection-url" usage:"redirection url for the oauth callback url, defaults to host header is absent" env:"REDIRECTION_URL"`
 	// RevocationEndpoint is the token revocation endpoint to revoke refresh tokens
 	RevocationEndpoint string `json:"revocation-url" yaml:"revocation-url" usage:"url for the revocation endpoint to revoke refresh token" env:"REVOCATION_URL"`
+	// TokenIntrospectionEndpoint is the token introspection endpoint to inspect access tokens
+	TokenIntrospectionEndpoint string `json:"token-introspection-url" yaml:"token-introspection-url" usage:"url for the token introspection endpoint to inspect access token" env:"TOKEN_INTROSPECTION_URL"`
 	// SkipOpenIDProviderTLSVerify skips the tls verification for openid provider communication
 	SkipOpenIDProviderTLSVerify bool `json:"skip-openid-provider-tls-verify" yaml:"skip-openid-provider-tls-verify" usage:"skip the verification of any TLS communication with the openid provider"`
 	// OpenIDProviderProxy proxy for openid provider communication
@@ -223,6 +227,8 @@ type Config struct {
 	EnableForwarding bool `json:"enable-forwarding" yaml:"enable-forwarding" usage:"enables the forwarding proxy mode, signing outbound request"`
 	// EnableSecurityFilter enabled the security handler
 	EnableSecurityFilter bool `json:"enable-security-filter" yaml:"enable-security-filter" usage:"enables the security filter handler" env:"ENABLE_SECURITY_FILTER"`
+	// EnableTokenVerificationByTokenIntrospection indicate's the access token sholud be verify by token introspection
+	EnableTokenVerificationByTokenIntrospection bool `json:"enable-token-verification-by-token-introspection" yaml:"enable-token-verification-by-token-introspection" usage:"enables verifying of the access token by token introspection" env:"ENABLE_TOKEN_VERIFICATION_BY_TOKEN_INTROSPECTION"`
 	// EnableRefreshTokens indicate's you wish to ignore using refresh tokens and re-auth on expiration of access token
 	EnableRefreshTokens bool `json:"enable-refresh-tokens" yaml:"enable-refresh-tokens" usage:"enables the handling of the refresh tokens" env:"ENABLE_REFRESH_TOKEN"`
 	// EnableSessionCookies indicates the cookies, both token and refresh should not be persisted

@@ -86,8 +86,10 @@ func (r *oauthProxy) requestFAPIInteractionIDMiddleware(next http.Handler) http.
 		v := req.Header.Get("x-fapi-interaction-id")
 		if v == "" {
 			v = uuid.NewV1().String()
+			req.Header.Set("x-fapi-interaction-id", v)
 		}
 		w.Header().Set("x-fapi-interaction-id", v)
+
 		next.ServeHTTP(w, req)
 	})
 }
@@ -145,7 +147,7 @@ func (r *oauthProxy) authenticationMiddleware(resource *Resource) func(http.Hand
 					return
 				}
 			} else {
-				if err := verifyToken(r.client, user.token); err != nil {
+				if err := r.verifyToken(user.token); err != nil {
 					// step: if the error post verification is anything other than a token
 					// expired error we immediately throw an access forbidden - as there is
 					// something messed up in the token
@@ -155,6 +157,15 @@ func (r *oauthProxy) authenticationMiddleware(resource *Resource) func(http.Hand
 							zap.Error(err))
 
 						next.ServeHTTP(w, req.WithContext(r.accessForbidden(w, req)))
+						return
+					}
+
+					if err == ErrInvalidToken {
+						r.log.Error("access token failed verification",
+							zap.String("client_ip", clientIP),
+							zap.Error(err))
+
+						next.ServeHTTP(w, req.WithContext(r.redirectToAuthorization(w, req)))
 						return
 					}
 
