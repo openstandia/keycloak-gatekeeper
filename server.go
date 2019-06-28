@@ -167,6 +167,10 @@ func (r *oauthProxy) createReverseProxy() error {
 		r.log.Info("enabled the correlation request id middlware")
 		engine.Use(r.requestIDMiddleware(r.config.RequestIDHeader))
 	}
+	if r.config.EnableFAPIInteractionID {
+		r.log.Info("enabled FAPI interaction id middlware")
+		engine.Use(r.requestFAPIInteractionIDMiddleware)
+	}
 	// @step: enable the entrypoint middleware
 	engine.Use(entrypointMiddleware)
 

@@ -205,6 +205,8 @@ type Config struct {
 
 	// EnableRequestID indicates the proxy should add request id if none if found
 	EnableRequestID bool `json:"enable-request-id" yaml:"enable-request-id" usage:"indicates we should add a request id if none found" env:"ENABLE_REQUEST_ID"`
+	// EnableFAPIInteractionID indicates the proxy should handle x-fapi-interaction-id
+	EnableFAPIInteractionID bool `json:"enable-fapi-interaction-id" yaml:"enable-fapi-interaction-id" usage:"indicates we should handle x-fapi-interaction-id" env:"ENABLE_FAPI_INTERACTION_ID"`
 	// EnableLogoutRedirect indicates we should redirect to the identity provider for logging out
 	EnableLogoutRedirect bool `json:"enable-logout-redirect" yaml:"enable-logout-redirect" usage:"indicates we should redirect to the identity provider for logging out"`
 	// EnableDefaultDeny indicates we should deny by default all requests

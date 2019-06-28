@@ -80,6 +80,18 @@ func (r *oauthProxy) requestIDMiddleware(header string) func(http.Handler) http.
 	}
 }
 
+// requestFAPIInteractionIDMiddleware is responsible for handling header x-fapi-interaction-id
+func (r *oauthProxy) requestFAPIInteractionIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		v := req.Header.Get("x-fapi-interaction-id")
+		if v == "" {
+			v = uuid.NewV1().String()
+		}
+		w.Header().Set("x-fapi-interaction-id", v)
+		next.ServeHTTP(w, req)
+	})
+}
+
 // loggingMiddleware is a custom http logger
 func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -87,7 +99,13 @@ func (r *oauthProxy) loggingMiddleware(next http.Handler) http.Handler {
 		resp := w.(middleware.WrapResponseWriter)
 		next.ServeHTTP(resp, req)
 		addr := req.RemoteAddr
-		r.log.Info("client request",
+
+		logger := r.log
+		if r.config.EnableFAPIInteractionID {
+			logger = r.log.With(zap.String("x-fapi-interaction-id", w.Header().Get("x-fapi-interaction-id")))
+		}
+
+		logger.Info("client request",
 			zap.Duration("latency", time.Since(start)),
 			zap.Int("status", resp.Status()),
 			zap.Int("bytes", resp.BytesWritten()),
