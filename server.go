@@ -360,7 +360,7 @@ func (r *oauthProxy) Run() error {
 	listener, err := r.createHTTPListener(listenerConfig{
 		ca:                  r.config.TLSCaCertificate,
 		certificate:         r.config.TLSCertificate,
-		clientCert:          r.config.TLSClientCertificate,
+		clientCert:          r.config.TLSCaCertificate,
 		hostnames:           r.config.Hostnames,
 		letsEncryptCacheDir: r.config.LetsEncryptCacheDir,
 		listen:              r.config.Listen,
