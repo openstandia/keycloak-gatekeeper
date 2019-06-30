@@ -284,6 +284,8 @@ type Config struct {
 	TLSPrivateKey string `json:"tls-private-key" yaml:"tls-private-key" usage:"path to the private key for TLS" env:"TLS_PRIVATE_KEY"`
 	// TLSCaCertificate is the CA certificate which the client cert must be signed
 	TLSCaCertificate string `json:"tls-ca-certificate" yaml:"tls-ca-certificate" usage:"path to the ca certificate used for signing requests" env:"TLS_CA_CERTIFICATE"`
+	// TLSClientAuthType is the policy the server will follow for TLS Client Authentication
+	TLSClientAuthType string `json:"tls-client-auth-type" yaml:"tls-client-auth-type" usage:"policy the server will follow for TLS Client Authentication" env:"TLS_CLIENT_AUTH_TYPE"`
 	// TLSCaPrivateKey is the CA private key used for signing
 	TLSCaPrivateKey string `json:"tls-ca-key" yaml:"tls-ca-key" usage:"path the ca private key, used by the forward signing proxy" env:"TLS_CA_PRIVATE_KEY"`
 	// TLSClientCertificate is path to a client certificate to use for outbound connections

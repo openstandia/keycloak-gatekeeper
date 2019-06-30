@@ -358,9 +358,9 @@ func (r *oauthProxy) createForwardingProxy() error {
 // Run starts the proxy service
 func (r *oauthProxy) Run() error {
 	listener, err := r.createHTTPListener(listenerConfig{
-		ca:                  r.config.TLSCaCertificate,
 		certificate:         r.config.TLSCertificate,
-		clientCert:          r.config.TLSCaCertificate,
+		clientCA:            r.config.TLSCaCertificate,
+		clientAuthType:      parseTLSClientAuthType(r.config.TLSClientAuthType),
 		hostnames:           r.config.Hostnames,
 		letsEncryptCacheDir: r.config.LetsEncryptCacheDir,
 		listen:              r.config.Listen,
@@ -431,18 +431,18 @@ func (r *oauthProxy) Run() error {
 
 // listenerConfig encapsulate listener options
 type listenerConfig struct {
-	ca                  string   // the path to a certificate authority
-	certificate         string   // the path to the certificate if any
-	clientCert          string   // the path to a client certificate to use for mutual tls
-	hostnames           []string // list of hostnames the service will respond to
-	letsEncryptCacheDir string   // the path to cache letsencrypt certificates
-	listen              string   // the interface to bind the listener to
-	privateKey          string   // the path to the private key if any
-	proxyProtocol       bool     // whether to enable proxy protocol on the listen
-	redirectionURL      string   // url to redirect to
-	useFileTLS          bool     // indicates we are using certificates from files
-	useLetsEncryptTLS   bool     // indicates we are using letsencrypt
-	useSelfSignedTLS    bool     // indicates we are using the self-signed tls
+	certificate         string             // the path to the certificate if any
+	clientCA            string             // the path to a client certificate authority for mutual tls
+	clientAuthType      tls.ClientAuthType // policy the server will follow for TLS Client Authentication
+	hostnames           []string           // list of hostnames the service will respond to
+	letsEncryptCacheDir string             // the path to cache letsencrypt certificates
+	listen              string             // the interface to bind the listener to
+	privateKey          string             // the path to the private key if any
+	proxyProtocol       bool               // whether to enable proxy protocol on the listen
+	redirectionURL      string             // url to redirect to
+	useFileTLS          bool               // indicates we are using certificates from files
+	useLetsEncryptTLS   bool               // indicates we are using letsencrypt
+	useSelfSignedTLS    bool               // indicates we are using the self-signed tls
 
 	// advanced TLS settings
 	*tlsAdvancedConfig
@@ -561,16 +561,16 @@ func (r *oauthProxy) createHTTPListener(config listenerConfig) (net.Listener, er
 		}
 
 		// @check if we are doing mutual tls
-		if config.clientCert != "" {
-			caCert, err := ioutil.ReadFile(config.clientCert)
+		if config.clientCA != "" {
+			caCert, err := ioutil.ReadFile(config.clientCA)
 			if err != nil {
 				return nil, err
 			}
 			caCertPool := x509.NewCertPool()
 			caCertPool.AppendCertsFromPEM(caCert)
 			tlsConfig.ClientCAs = caCertPool
-			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		}
+		tlsConfig.ClientAuth = config.clientAuthType
 
 		listener = tls.NewListener(listener, tlsConfig)
 	}

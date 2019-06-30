@@ -375,3 +375,19 @@ func parseTLS(config *tlsAdvancedConfig) (*tlsSettings, error) {
 	}
 	return parsed, nil
 }
+
+func parseTLSClientAuthType(clientAuthType string) tls.ClientAuthType {
+	switch clientAuthType {
+	case "NoClientCert":
+		return tls.NoClientCert
+	case "RequestClientCert":
+		return tls.RequestClientCert
+	case "RequireAnyClientCert":
+		return tls.RequireAnyClientCert
+	case "VerifyClientCertIfGiven":
+		return tls.VerifyClientCertIfGiven
+	case "RequireAndVerifyClientCert":
+		return tls.RequireAndVerifyClientCert
+	}
+	return tls.RequireAndVerifyClientCert
+}
