@@ -160,7 +160,7 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	// step: check the access token is valid
-	if err = r.verifyToken(token); err != nil {
+	if err = r.verifyToken(req, token); err != nil {
 		r.log.Error("unable to verify the id token", zap.Error(err))
 		r.accessForbidden(w, req)
 		return

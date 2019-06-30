@@ -16,6 +16,8 @@ limitations under the License.
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -45,7 +47,15 @@ func (r *oauthProxy) getOAuthClient(redirectionURL string, clientAuthMethod stri
 }
 
 // verifyToken verify that the token in the user context is valid
-func (r *oauthProxy) verifyToken(token jose.JWT) error {
+func (r *oauthProxy) verifyToken(req *http.Request, token jose.JWT) error {
+	var reqThumbprint string
+	if req != nil && req.TLS != nil {
+		fmt.Printf("req.TLS=%v\n", req.TLS)
+		if len(req.TLS.PeerCertificates) > 0 {
+			b := sha256.Sum256(req.TLS.PeerCertificates[0].Raw)
+			reqThumbprint = strings.TrimRight(base64.URLEncoding.EncodeToString(b[:]), "=")
+		}
+	}
 	if r.config.EnableTokenVerificationByTokenIntrospection {
 		res, err := r.introClient.Introspect(token.Encode())
 		if err != nil {
@@ -57,11 +67,10 @@ func (r *oauthProxy) verifyToken(token jose.JWT) error {
 		if !contains(res.Audience, r.config.ClientID) {
 			return ErrInvalidToken
 		}
-		// OAuth Mutual TLS
+		// OAuth Mutual TLS verification with token Introspection
 		// https://tools.ietf.org/html/draft-ietf-oauth-mtls-14#section-3.2
 		if thumbprint, ok := res.Confirmation["x5t#S256"].(string); ok {
-			// TODO check thumbprint
-			if thumbprint == "TODO" {
+			if thumbprint != reqThumbprint {
 				return ErrInvalidToken
 			}
 		}
@@ -77,11 +86,12 @@ func (r *oauthProxy) verifyToken(token jose.JWT) error {
 		if err != nil {
 			return err
 		}
+		// OAuth Mutual TLS verification with JWT access token
+		// https://tools.ietf.org/html/draft-ietf-oauth-mtls-14#section-3.1
 		if val, ok := claims["cnf"]; ok {
 			if cnf, ok := val.(map[string]interface{}); ok {
 				if thumbprint, ok := cnf["x5t#S256"].(string); ok {
-					// TODO check thumbprint
-					if thumbprint == "TODO" {
+					if thumbprint != reqThumbprint {
 						return ErrInvalidToken
 					}
 				}
